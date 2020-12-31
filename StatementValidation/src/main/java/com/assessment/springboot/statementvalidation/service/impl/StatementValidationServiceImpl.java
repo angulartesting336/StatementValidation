@@ -25,7 +25,6 @@ public class StatementValidationServiceImpl implements StatementValidationServic
 	@Override
 	public ResponseDTO customerStatementValidation(List<CustomerStatementDTO> customerStatementDTOList) {
 		ResponseDTO responseDTO = new ResponseDTO();
-		boolean duplicateReferenceCheck = false;
 
 		try {
 
@@ -40,38 +39,36 @@ public class StatementValidationServiceImpl implements StatementValidationServic
 						return errorRecordDTO;
 					}).collect(Collectors.toList());
 
-			if (!referenceDTOList.isEmpty()) {
-				responseDTO.setResult(StatementValidationConstants.DUPLICATE_REFERENCE);
-				duplicateReferenceCheck = true;
-			}
-
-			boolean check = duplicateReferenceCheck;
-			List<ErrorRecordDTO> balanceDTOList = customerStatementDTOList.stream().map(customerStatementDTO -> {
+				List<ErrorRecordDTO> balanceDTOList = customerStatementDTOList.stream().map(customerStatementDTO -> {
 				ErrorRecordDTO errorRecordDTO = null;
 
 				if (customerStatementDTO.getEndBalance() != (customerStatementDTO.getStartBalance()
 						+ customerStatementDTO.getMutation())) {
 
 					errorRecordDTO = new ErrorRecordDTO();
-
-					responseDTO.setResult(check ? StatementValidationConstants.DUPLICATE_REF_INCORRECT_END_BALANCE
-							: StatementValidationConstants.INCORRECT_END_BALANCE);
-
+				
 					errorRecordDTO.setAccountNumber(customerStatementDTO.getAccountNumber());
 					errorRecordDTO.setReference(customerStatementDTO.getTransactionReference());
 				}
 				return errorRecordDTO;
 			}).filter(Objects::nonNull ).distinct().collect(Collectors.toList());
-
-			referenceDTOList.addAll(balanceDTOList);
-
-			if (!duplicateReferenceCheck && balanceDTOList.isEmpty()) {
+			
+			
+			if (referenceDTOList.isEmpty() && balanceDTOList.isEmpty()) {
 				responseDTO.setResult(StatementValidationConstants.SUCCESSFUL);
+			}else if(!referenceDTOList.isEmpty() && !balanceDTOList.isEmpty()) {
+				responseDTO.setResult(StatementValidationConstants.DUPLICATE_REF_INCORRECT_END_BALANCE);
+			}else if(!referenceDTOList.isEmpty() && balanceDTOList.isEmpty()){
+				responseDTO.setResult(StatementValidationConstants.DUPLICATE_REFERENCE);
+			}else {
+				responseDTO.setResult(StatementValidationConstants.INCORRECT_END_BALANCE);
 			}
+			
+			referenceDTOList.addAll(balanceDTOList);
 
 			responseDTO.setErrorRecordDTOList(referenceDTOList);
 		} catch (Exception ex) {
-			log.error("Error during validating customer statements", ex);
+			log.error(StatementValidationConstants.ERROR_MESSAGE, ex);
 			responseDTO.setResult(StatementValidationConstants.INTERNAL_SERVER_ERROR);
 			responseDTO.setErrorRecordDTOList(new ArrayList<>());
 		}

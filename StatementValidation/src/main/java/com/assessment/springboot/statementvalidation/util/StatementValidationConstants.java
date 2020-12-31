@@ -21,4 +21,6 @@ public class StatementValidationConstants {
 	public static final String EXPECTED_JSON = "{\"result\":\"SUCCESSFUL\",\"errorRecordDTOList\":[]}";
 
 	public static final String EXPECTED_DUPLICATE_JSON = "{\"result\":\"DUPLICATE_REFERENCE\",\"errorRecordDTOList\":[{\"reference\":1234322345,\"accountNumber\":\"NL91ABNA0417164300\"}]}";
+	
+	public static final String ERROR_MESSAGE = "Error during validating customer statements";
 }
